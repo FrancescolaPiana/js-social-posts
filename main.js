@@ -56,7 +56,30 @@ const posts = [
     }
 ];
 
-let usernow = 0;
+const userlikeid = []
+
+function getProfile(profile) {
+    if (profile.image) {
+        return `<img class="profile-pic" src="${profile.image}" alt="${profile.name}">`
+    }
+    else{
+        let initials = profile.name.split(' ').reduce((acc,value)=> {
+            return acc + value.charAt(0)
+        },'')
+        return `
+            <div class="profile-pic-default">
+            <span>${initials}</span>
+            </div>
+        `;
+    }
+}
+
+function formateDate(createdat) {
+    const d = new Date(createdat)
+    let formattedDate = d.toLocaleDateString('it-IT')
+    console.log(formattedDate);
+    return formattedDate
+}
 
 // main function generate html
     const father = document.getElementById('container')
@@ -65,40 +88,74 @@ let usernow = 0;
     let post = document.createElement('div')
     post.className = "post"
     post.setAttribute('id', `${value.id}`)
-    post.innerHTML = `
-    <div class="post__header">
+    post.innerHTML = 
+    `<div class="post__header">
     <div class="post-meta">                    
         <div class="post-meta__icon">
-            <img class="profile-pic" src="${value.author.image}"  alt="Phil Mangione">                    
+            ${getProfile(value.author)}                   
         </div>
         <div class="post-meta__data">
             <div class="post-meta__author">${value.author.name}</div>
-            <div class="post-meta__time"></div>
+            <div class="post-meta__time">${formateDate(value.created)}</div>
         </div>                    
     </div>
    </div>
    <div class="post__text">${value.content}</div>
    <div class="post__image">
-    <img src="${value.media}" alt="">
+    <img src="${value.media}" alt="foto post ${value.id}">
    </div>
    <div class="post__footer">
     <div class="likes js-likes">
         <div class="likes__cta">
-            <a id="like-${index}" class="lk like-button  js-like-button" data-postid="1">
+            <a class="lk like-button  js-like-button" href="" data-postid="${value.id}">
                 <i class="like-button__icon fas fa-thumbs-up" aria-hidden="true"></i>
                 <span class="like-button__label">Mi Piace</span>
             </a>
         </div>
         <div class="likes__counter">
-            Piace a <b id="like-counter-1" class="js-likes-counter">${value.likes + usernow}</b> persone
+            Piace a <b id="like-counter-${value.id}" class="js-likes-counter">${value.likes}</b> persone
         </div>
     </div> 
-   </div>    
-   `
-
-
+   </div>`
     father.append(post);
 });
     
+const likebtn = document.querySelectorAll('.like-button');
+likebtn.forEach((el,i) => {
+    el.addEventListener('click' , function(e){
+        // evito href dell'ancora
+        e.preventDefault();
+        // aggiungo 7rimuovo classe button liked green
+        el.classList.toggle('like-button--liked');
+        // recupero dal dataset intero l'id del likebutton premuto
+        const postId = parseInt(el.dataset.postid)
+        // prendo l'elemento che contiene il numero likes
+        const likes = document.getElementById('like-counter-'+postId)
+        console.log(likes);
 
-document.getElementsByClassName('lk').add
+        // recupero dall'array dei post l'indice corrente
+        const postindex = posts.findIndex((value) => {
+            return value.id === postId;
+        })
+        console.log('indice' , postindex);
+
+        if (postindex === -1) return;
+
+        // recupero dall'array dei post piaciuti l'indice dell'id
+        const likeIndex = userlikeid.indexOf(postId);
+
+        // trovo l'indice decremento il like e rimuovo l'indice dall'array
+        if (likeIndex !== -1) {
+            posts[postindex].likes -= 1;
+            userlikeid.splice(likeIndex, 1)
+        }
+        // viceversa non trovo l'id incremento i like e aggiungo l'id all array
+        else{
+            posts[postindex].likes += 1;
+            userlikeid.push(postId)
+        }
+        // inserisco il nuovo valore like
+        likes.innerHTML = posts[postindex].likes
+    })       
+});
+
